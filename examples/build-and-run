@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -eu
+
+if [ ! -d ../../../ableC ]; then
+    echo "Expected to this repository to be checked out in an extensions/ folder at the same level as the ableC."
+fi
+
+if [ ! -f ../../../ableC/ableC.jar ]; then
+    echo "Build ableC.jar first by running the build script in the ableC directory."
+fi
+
+if [ ! -f ../ableC-dep-skeleton.jar ]; then
+    echo "Build ableC-dep-skeleton.jar first by running 'make build' in the ableC-dep-skeleton directory."
+fi
+
+if [ ! -f ../../ableC-lib-skeleton/lib/libskeleton.so ]; then
+    echo "Build libskeleton.so first by running 'make libraries' in the ableC-lib-skeleton directory."
+fi
+
+set -x
+
+silver -I ../ableC-dep-skeleton.jar -I ../../../ableC/ableC.jar -I ../grammars -o compiler.jar $@ edu:umn:cs:melt:exts:ableC:depskeleton:artifacts:compiler
+java -Xss8M -jar compiler.jar skeleton.xc -I../../ableC-lib-skeleton/include
+gcc -c skeleton.c -o skeleton.o
+gcc skeleton.o -o skeleton.out -L../../ableC-lib-skeleton/lib -lskeleton
+
+export LD_LIBRARY_PATH=../../ableC-lib-skeleton/lib
+./skeleton.out
